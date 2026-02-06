@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Legacy | Official AAA Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --white: #ffffff;
+            --green: #138808;
+            --neon-blue: #00f2ff;
+            --bg-deep: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        body {
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+            filter: blur(1px) brightness(0.4);
+        }
+
+        /* --- Header --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-family: 'Orbitron';
+            font-weight: 900;
+            color: var(--saffron);
+            letter-spacing: 4px;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+        }
+
+        /* --- Hero --- */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 28vh 10% 0 10%;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Bebas Neue';
+            font-size: clamp(5rem, 18vw, 14rem);
+            line-height: 0.8;
+            margin: 20px 0;
+            letter-spacing: -2px;
+            text-shadow: 0 0 40px rgba(0, 242, 255, 0.2);
+        }
+
+        .timer-wrap { display: flex; gap: 15px; margin: 30px 0; }
+        .timer-card {
+            background: var(--glass);
+            border: 1px solid var(--neon-blue);
+            padding: 20px;
+            border-radius: 4px;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        }
+        .timer-card h2 { font-family: 'Orbitron'; font-size: 2.5rem; color: var(--neon-blue); }
+
+        /* --- Yard --- */
+        .yard-section { padding: 120px 5%; background: #000; }
+        .yard-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 40px;
+            height: 650px;
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.01);
+            padding: 30px;
+        }
+        #yard-stage { border-radius: 20px; background: radial-gradient(circle, #111, #000); position: relative; }
+        .yard-menu { display: flex; flex-direction: column; gap: 15px; }
+        .yard-btn {
+            background: var(--glass);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+        .yard-btn.active { border-color: var(--saffron); background: rgba(255, 153, 51, 0.15); }
+
+        /* --- Table & Specs --- */
+        .log-section { padding: 100px 5%; background: #000; }
+        .log-table { width: 100%; max-width: 1100px; margin: 40px auto; border-collapse: collapse; background: var(--glass); border-radius: 20px; overflow: hidden; }
+        .log-table th { background: var(--saffron); color: black; padding: 20px; font-family: 'Orbitron'; text-align: left;}
+        .log-table td { padding: 20px; border-bottom: 1px solid var(--glass-border); font-family: 'Orbitron'; font-size: 0.9rem;}
+
+        .specs-section { padding: 80px 5%; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; background: #050505; }
+        .spec-box { padding: 40px; border: 1px solid var(--glass-border); border-radius: 20px; }
+
+        .btn-studio {
+            padding: 18px 45px;
+            background: var(--saffron);
+            color: black;
+            font-family: 'Orbitron';
+            font-weight: 900;
+            text-transform: uppercase;
+            text-decoration: none;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+            transition: 0.3s;
+            display: inline-block;
+        }
+        .btn-studio:hover { background: white; transform: scale(1.05); }
+
+    </style>
+</head>
+<body>
+
+    <div class="vignette"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <nav>
+        <div class="logo">Railway Legacy</div>
+        <div style="display: flex; gap: 30px; font-family: 'Orbitron'; font-size: 0.7rem; align-items: center;">
+            <span style="opacity: 0.5;">PC | MOBILE | CONSOLE</span>
+            <a href="#" class="btn-studio" style="padding: 10px 25px; font-size: 0.6rem;">PRE-ORDER</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <span style="font-family: 'Orbitron'; color: var(--neon-blue); letter-spacing: 12px;">ESTABLISHED 2026</span>
+        <h1 id="hero-title">Railway<br>LEGACY</h1>
+        
+        <div class="timer-wrap">
+            <div class="timer-card"><h2 id="d">00</h2><small>DAYS</small></div>
+            <div class="timer-card"><h2 id="h">00</h2><small>HRS</small></div>
+            <div class="timer-card"><h2 id="m">00</h2><small>MINS</small></div>
+            <div class="timer-card"><h2 id="s">00</h2><small>SECS</small></div>
+        </div>
+
+        <p style="max-width: 600px; line-height: 2; opacity: 0.8; margin-bottom: 40px;">
+            The definitive Indian railway simulator. Experience the **Rajasthan Pink City Express** with authentic WAP-7 and Vande Bharat locomotives.
+        </p>
+
+        <a href="#yard" class="btn-studio">ENTER THE YARD</a>
+    </section>
+
+    <section class="yard-section" id="yard">
+        <h2 style="font-family: 'Orbitron'; text-align: center; margin-bottom: 60px; font-size: 2.5rem;"><br>LOCOMOTIVE YARD 2.0</h2>
+        <br>
+        <br>
+        <br>
+        <br>
+        <div class="yard-container">
+            <div id="yard-stage">
+                <canvas id="yard-canvas"></canvas>
+                <br>
+            </div>
+            <div class="yard-menu">
+                <div class="yard-btn active" onclick="switchLoco('vande')">
+                    <h4 style="font-family: 'Orbitron'; color: var(--neon-blue);">VANDE BHARAT</h4>
+                    <small>Self-Propelled EMU | 160 KMPH</small>
+                </div>
+                <div class="yard-btn" onclick="switchLoco('wap7')">
+                    <h4 style="font-family: 'Orbitron'; color: var(--saffron);">WAP-7 TIGER</h4>
+                    <small>Heavy Electric | 6350 HP</small>
+                </div>
+                <div class="yard-btn" onclick="switchLoco('steam')">
+                    <h4 style="font-family: 'Orbitron';">WP STEAM</h4>
+                    <small>Heritage Legend | 1947 Bullet</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="log-section">
+        <h2 style="font-family: 'Orbitron'; text-align: center; font-size: 2.5rem;">STATION MASTER'S LOG</h2>
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>RANK</th>
+                    <th>PILOT NAME</th>
+                    <th>LEVEL</th>
+                    <th>ROUTE COMPLETED</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard"></tbody>
+        </table>
+    </section>
+
+    <section class="specs-section">
+        <div class="spec-box">
+            <h3 style="font-family: 'Orbitron'; color: var(--saffron); margin-bottom: 20px;">PC REQUIREMENTS</h3>
+            <ul style="list-style: none; opacity: 0.7; font-size: 0.9rem; line-height: 2;">
+                <li>OS: Windows 11 64-bit</li>
+                <li>CPU: Intel i7-12700K</li>
+                <li>GPU: NVIDIA RTX 4070</li>
+                <li>RAM: 32GB DDR5</li>
+            </ul>
+        </div>
+        <div class="spec-box">
+            <h3 style="font-family: 'Orbitron'; color: var(--neon-blue); margin-bottom: 20px;">MOBILE REQUIREMENTS</h3>
+            <ul style="list-style: none; opacity: 0.7; font-size: 0.9rem; line-height: 2;">
+                <li>OS: Android 13+ / iOS 16+</li>
+                <li>Processor: Snapdragon 8 Gen 2</li>
+                <li>Storage: 15GB Available Space</li>
+            </ul>
+        </div>
+    </section>
+    <h1>Built By<br>Code Verse <br> By Ansh</h1>
+
+    <script>
+        // --- BG 3D SCENE ---
+        const bgScene = new THREE.Scene();
+        const bgCam = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const bgRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), antialias: true, alpha: true });
+        bgRenderer.setSize(window.innerWidth, window.innerHeight);
+
+        const tracks = new THREE.Group();
+        for(let i=0; i<60; i++) {
+            const sleeper = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 0.5), new THREE.MeshStandardMaterial({color: 0x222222}));
+            sleeper.position.z = -i * 2.5;
+            tracks.add(sleeper);
+            const rL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 2.5), new THREE.MeshStandardMaterial({color: 0x555555}));
+            rL.position.set(-1.2, 0.15, -i * 2.5);
+            tracks.add(rL);
+            const rR = rL.clone(); rR.position.x = 1.2;
+            tracks.add(rR);
+        }
+        bgScene.add(tracks, new THREE.AmbientLight(0xffffff, 2));
+        bgCam.position.set(0, 3, 10);
+
+        // --- YARD 3D SCENE ---
+        const yardScene = new THREE.Scene();
+        const yardCam = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        const yardRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('yard-canvas'), antialias: true });
+        const yardCont = document.getElementById('yard-stage');
+        yardScene.add(new THREE.AmbientLight(0xffffff, 0.8), new THREE.DirectionalLight(0xffffff, 1).position.set(5,5,5));
+        
+        let activeLoco;
+        function buildLoco(type) {
+            if(activeLoco) yardScene.remove(activeLoco);
+            const g = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({color: type==='vande' ? 0xeeeeee : type==='wap7' ? 0x003399 : 0x222222});
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 7), mat);
+            g.add(body);
+            
+            if(type === 'vande') {
+                const nose = new THREE.Mesh(new THREE.BoxGeometry(2, 1.2, 1.5), new THREE.MeshStandardMaterial({color: 0x003399}));
+                nose.position.z = 3.5; g.add(nose);
+            } else if(type === 'wap7') {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.3, 7.1), new THREE.MeshStandardMaterial({color: 0xFF9933}));
+                g.add(stripe);
+            }
+            activeLoco = g;
+            yardScene.add(activeLoco);
+        }
+
+        function switchLoco(type) {
+            buildLoco(type);
+            document.querySelectorAll('.yard-btn').forEach(b => b.classList.remove('active'));
+            if(event) event.currentTarget.classList.add('active');
+        }
+
+        // --- Leaderboard Data ---
+        const pilots = [
+            { rank: "01", name: "Ansh_Legend", lvl: "99", route: "New Delhi-Jaipur", status: "ON-TRACK" },
+            { rank: "02", name: "Pilot_Sandeep", lvl: "85", route: "Konkan Odyssey", status: "STATIONED" },
+            { rank: "03", name: "Rahul_Express", lvl: "72", route: "Kalka-Shimla", status: "ON-TRACK" }
+        ];
+
+        function init() {
+            document.getElementById('leaderboard').innerHTML = pilots.map(p => `
+                <tr>
+                    <td style="color:var(--saffron)">#${p.rank}</td>
+                    <td>${p.name}</td>
+                    <td>LVL ${p.lvl}</td>
+                    <td>${p.route}</td>
+                    <td style="color:#00ff88">${p.status}</td>
+                </tr>
+            `).join('');
+            buildLoco('vande');
+            yardCam.position.set(8, 5, 12);
+            yardCam.lookAt(0,0,0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            tracks.position.z += 1.0;
+            if(tracks.position.z > 2.5) tracks.position.z = 0;
+            if(activeLoco) activeLoco.rotation.y += 0.005;
+            bgRenderer.render(bgScene, bgCam);
+            yardRenderer.setSize(yardCont.clientWidth, yardCont.clientHeight);
+            yardCam.aspect = yardCont.clientWidth / yardCont.clientHeight;
+            yardCam.updateProjectionMatrix();
+            yardRenderer.render(yardScene, yardCam);
+        }
+
+        // --- Parallax ---
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 2;
+            const y = (e.clientY / window.innerHeight - 0.5) * 2;
+            gsap.to(bgCam.position, { x: x * 2, y: 3 + (y * -1), duration: 2 });
+            gsap.to('#hero-title', { x: x * 30, y: y * 15, duration: 1 });
+        });
+
+        // --- Countdown ---
+        const target = new Date("Feb 27, 2026 00:00:00").getTime();
+        setInterval(() => {
+            const now = new Date().getTime();
+            const gap = target - now;
+            document.getElementById('d').innerText = Math.floor(gap / 86400000).toString().padStart(2,'0');
+            document.getElementById('h').innerText = Math.floor((gap % 86400000) / 3600000).toString().padStart(2,'0');
+            document.getElementById('m').innerText = Math.floor((gap % 3600000) / 60000).toString().padStart(2,'0');
+            document.getElementById('s').innerText = Math.floor((gap % 60000) / 1000).toString().padStart(2,'0');
+        }, 1000);
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
